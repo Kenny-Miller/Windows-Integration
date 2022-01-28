@@ -1,6 +1,7 @@
 import socket
+import pyautogui
 from logger import create_logger
-from pynput.mouse import Button, Controller
+from pynput.mouse import Controller
 
 class WallClient():
   def __init__(self,ip,port) -> None:
@@ -15,16 +16,27 @@ class WallClient():
     self.running = True
     while self.running:
       (data, addr) = self.sock.recvfrom(1024)
-      msg = data.decode('utf-8')
-      self.logger.debug(f"[Message]: {msg} from {addr}")
-      match msg:
+      (action, msg) = data.decode('utf-8').split(":")
+      self.logger.debug(f"[Message]:{action} {msg} from {addr}")
+      match action:
         case 'exit': self.running = False
-        case _: self.handle(msg)
+        case 'click': self.click(msg)
+        case 'move': self.move(msg)
   
-  def handle(self, msg) -> None:
+  def click(self, msg) -> None:
     (x, y, pressed) = msg.split(" ")
-    self.mouse.position = (x, y)
-    self.mouse.press(Button.left) if pressed == False else self.mouse.release(Button.left)
+    (s_x, s_y) = self.scale_coordinates(int(x),int(y))
+    pyautogui.dragTo(x=s_x,y=s_y, button='left')
+
+  def move(self, msg) -> None:
+    (x, y) = msg.split(" ")
+    (s_x, s_y) = self.scale_coordinates(int(x),int(y))
+    pyautogui.moveTo(x=s_x,y=s_y)    
+
+  def scale_coordinates(self,x,y):
+    # Do math here
+
+    return (x,y)
 
 if __name__ == "__main__":
   hostname = socket.gethostname()

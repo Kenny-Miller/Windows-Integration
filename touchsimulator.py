@@ -10,7 +10,7 @@ class TouchSimulator:
     self.target_ip = target_ip
     self.target_port = target_port
     self.sock = socket.socket(socket.AF_INET, socket.SOCK_DGRAM)
-    self.mouse_listener = MouseListener(on_click=self.on_click)
+    self.mouse_listener = MouseListener(on_click=self.on_click, on_move=self.on_move)
     self.key_listener = KeyboardListener(on_press=self.on_press)
 
   def start(self) -> None:
@@ -21,13 +21,18 @@ class TouchSimulator:
     self.key_listener.join()
 
   def on_click(self, x, y, button, pressed) -> None:
-    msg = f"{x} {y} {pressed}"
+    msg = f"click:{x} {y} {pressed}"
+    self.logger.debug(msg)
+    self.sock.sendto(msg.encode('utf-8'), (self.target_ip, self.target_port))
+
+  def on_move(self, x, y):
+    msg = f"move:{x} {y}"
     self.logger.debug(msg)
     self.sock.sendto(msg.encode('utf-8'), (self.target_ip, self.target_port))
 
   def on_press(self, key) -> None:
     self.logger.debug('Stop Requested')
-    self.sock.sendto('exit'.encode('utf-8'), (self.target_ip, self.target_port))
+    self.sock.sendto('exit:'.encode('utf-8'), (self.target_ip, self.target_port))
     self.mouse_listener.stop()
     self.key_listener.stop()
 
