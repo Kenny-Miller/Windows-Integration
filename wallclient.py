@@ -9,6 +9,7 @@ class WallClient():
     self.sock = socket.socket(socket.AF_INET, socket.SOCK_DGRAM)
     self.sock.bind((ip,port))
     self.mouse = Controller()
+    self.prev = None
     self.running = False
   
   def start(self) -> None:
@@ -26,7 +27,12 @@ class WallClient():
   def click(self, msg) -> None:
     (x, y, pressed) = msg.split(" ")
     (s_x, s_y) = self.scale_coordinates(int(x),int(y))
-    pyautogui.dragTo(x=s_x,y=s_y, button='left')
+    if pressed:
+      self.prev = (s_x, s_y)
+    else:
+      (prev_x, prev_y) = self.prev
+      pyautogui.moveTo(x=prev_x, y=prev_y)
+      pyautogui.dragTo(x=s_x, y=s_y, button='left')
 
   def move(self, msg) -> None:
     (x, y) = msg.split(" ")
